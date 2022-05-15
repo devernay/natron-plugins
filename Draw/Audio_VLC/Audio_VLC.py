@@ -43,7 +43,7 @@ def createInstance(app, group):
         del param
 
     # Create the user parameters
-    lastNode.control = lastNode.createPageParam("control", "control")
+    lastNode.control = lastNode.createPageParam("control", "Controls")
     param = lastNode.createFileParam("Sound_File", "Sound File")
     param.setSequenceEnabled(False)
 
@@ -117,6 +117,18 @@ def createInstance(app, group):
     param.setAddNewLine(True)
     param.setEvaluateOnChange(False)
     lastNode.play_song = param
+    del param
+
+    param = lastNode.createButtonParam("start_song", "Play from Start")
+
+    # Add the param to the page
+    lastNode.control.addParam(param)
+
+    # Set param properties
+    param.setHelp("")
+    param.setAddNewLine(False)
+    param.setEvaluateOnChange(False)
+    lastNode.start_song = param
     del param
 
     param = lastNode.createButtonParam("stop_song", "Stop")

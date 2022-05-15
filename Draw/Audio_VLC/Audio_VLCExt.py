@@ -40,7 +40,10 @@ def open_vlc(sound_file, fps, range_start, range_end):
     cmd = get_command(sound_file, fps, range_start, range_end)
     if platform == "win32":
         _proc = subprocess.Popen(
-            cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            shell=True,
         )
     else:
         _proc = subprocess.Popen(
@@ -50,6 +53,21 @@ def open_vlc(sound_file, fps, range_start, range_end):
             shell=True,
         )
     print("Playing process pid %s " % (_proc.pid))
+
+
+def play_natron(viewer, thisNode, sound_file, fps, range_start, range_end):
+    if range_start > range_end:
+        natron.errorDialog(
+            "Error", "The end frame should not come before the start frame."
+        )
+        return
+
+    thisNode.start_frame.set(range_start)
+    thisNode.end_frame.set(range_end)
+    thisNode.FPS.set(fps)
+    viewer.seek(range_start)
+    viewer.startForward()
+    open_vlc(sound_file, fps, range_start, range_end)
 
 
 def close_vlc():
@@ -83,16 +101,24 @@ def vlc_callback(thisParam, thisNode, thisGroup, app, userEdited):
         return
 
     if thisParam == thisNode.play_song:
-        range_start = viewer.getFrameRange()[0]
-        range_end = viewer.getFrameRange()[1]
-        sound_file = thisNode.Sound_File.get()
-        fps = app.frameRate.get()
-        thisNode.start_frame.set(range_start)
-        thisNode.end_frame.set(range_end)
-        thisNode.FPS.set(fps)
-        viewer.seek(range_start)
-        viewer.startForward()
-        open_vlc(sound_file, fps, range_start, range_end)
+        play_natron(
+            viewer,
+            thisNode,
+            thisNode.Sound_File.get(),
+            app.frameRate.get(),
+            viewer.getCurrentFrame(),
+            viewer.getFrameRange()[1],
+        )
+
+    if thisParam == thisNode.start_song:
+        play_natron(
+            viewer,
+            thisNode,
+            thisNode.Sound_File.get(),
+            app.frameRate.get(),
+            viewer.getFrameRange()[0],
+            viewer.getFrameRange()[1],
+        )
 
     if thisParam == thisNode.stop_song:
         viewer.pause()
