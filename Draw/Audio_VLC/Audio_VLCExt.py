@@ -55,19 +55,17 @@ def open_vlc(sound_file, fps, range_start, range_end):
     print("Playing process pid %s " % (_proc.pid))
 
 
-def play_natron(viewer, thisNode, sound_file, fps, range_start, range_end):
+def play_natron(viewer, sound_file, fps, range_start, range_end):
     if range_start > range_end:
         natron.errorDialog(
             "Error", "The end frame should not come before the start frame."
         )
         return
 
-    thisNode.start_frame.set(range_start)
-    thisNode.end_frame.set(range_end)
-    thisNode.FPS.set(fps)
+    viewer.setFrameRange(range_start, range_end)
+    open_vlc(sound_file, fps, range_start, range_end)
     viewer.seek(range_start)
     viewer.startForward()
-    open_vlc(sound_file, fps, range_start, range_end)
 
 
 def close_vlc():
@@ -92,6 +90,10 @@ def panic_vlc():
 
 def vlc_callback(thisParam, thisNode, thisGroup, app, userEdited):
     viewer = get_viewer(app)
+    thisNode.start_frame.set(viewer.getFrameRange()[0])
+    thisNode.end_frame.set(viewer.getFrameRange()[1])
+    thisNode.FPS.set(app.frameRate.get())
+
     if not viewer:
         if userEdited and thisParam == thisNode.play_song:
             natron.errorDialog(
@@ -103,7 +105,6 @@ def vlc_callback(thisParam, thisNode, thisGroup, app, userEdited):
     if thisParam == thisNode.play_song:
         play_natron(
             viewer,
-            thisNode,
             thisNode.Sound_File.get(),
             app.frameRate.get(),
             viewer.getCurrentFrame(),
@@ -113,7 +114,6 @@ def vlc_callback(thisParam, thisNode, thisGroup, app, userEdited):
     if thisParam == thisNode.start_song:
         play_natron(
             viewer,
-            thisNode,
             thisNode.Sound_File.get(),
             app.frameRate.get(),
             viewer.getFrameRange()[0],
