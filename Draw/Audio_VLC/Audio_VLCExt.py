@@ -1,102 +1,129 @@
 import os
 from sys import platform
 import subprocess
-from NatronEngine import*
-from NatronGui import *
-# from PySide.QtGui import *
+from NatronEngine import *
+
+# Try to import GUI stuff, as VLC will be unnecessary in command-line mode.
+try:
+    from NatronGui import *
+except ImportError:
+    pass
 
 
-
-
-def viwer_get():
-    app = natron.getGuiInstance(0)
-    app.selectAllNodes(app)
-    currentNode = app.getSelectedNodes()
-
-    # we check every node's 'ID' in the list #
-    for node in currentNode:
-        currentID = node.getPluginID()
-
-        # if the current node's ID is of 'viewer' type #
-        if currentID == 'fr.inria.built-in.Viewer':
-
-            # then we grab its 'label' #
-            viewerLabel = node.getLabel()
-
-            # we select it #
-            myViewer = app.getViewer(viewerLabel)
-           
-            break
-    
-    return myViewer
-
-
-
-def playAudio(sound_file,fps,range_start,range_end):
-   
-    start_frame = (range_start/fps)
-    end_frame = ((range_end - 1)/fps)
+def get_command(sound_file, fps, range_start, range_end):
+    start_frame = range_start / fps
+    end_frame = (range_end - 1) / fps
     # length = end_frame - start_frame
     if platform == "win32":
-        player = 'vlc --intf="dummy" --repeat --no-video \
-            --start-time="%f" --stop-time="%f" "%s"'\
-                %(start_frame, end_frame, os.path.abspath(sound_file))
+        return (
+            'vlc --intf="dummy" --repeat --no-video \
+            --start-time="%f" --stop-time="%f" "%s"'
+            % (start_frame, end_frame, os.path.abspath(sound_file))
+        )
+    return (
+        'vlc --intf="dummy" --repeat --no-video \
+        --start-time="%f" --stop-time="%f" "%s"'
+        % (start_frame, end_frame, sound_file)
+    )
+
+
+def get_viewer(app):
+    return app.getActiveViewer() or app.getViewer("Viewer1")
+
+
+# Popen object that we take great effort to prevent from pop-ening.
+_proc = None
+
+
+def open_vlc(sound_file, fps, range_start, range_end):
+    global _proc
+    cmd = get_command(sound_file, fps, range_start, range_end)
+    if platform == "win32":
+        _proc = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            shell=True,
+        )
     else:
-        player = 'vlc --intf="dummy" --repeat --no-video \
-            --start-time="%f" --stop-time="%f" "%s"'\
-                %(start_frame, end_frame,sound_file)
+        _proc = subprocess.Popen(
+            "exec " + cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            shell=True,
+        )
+    print("Playing process pid %s " % (_proc.pid))
 
-    return player
+
+def play_natron(viewer, sound_file, fps, range_start, range_end):
+    if range_start > range_end:
+        natron.errorDialog(
+            "Error", "The end frame should not come before the start frame."
+        )
+        return
+
+    viewer.setFrameRange(range_start, range_end)
+    open_vlc(sound_file, fps, range_start, range_end)
+    viewer.seek(range_start)
+    viewer.startForward()
 
 
-proc = 0
-
-def myCallback(thisParam, thisNode, thisGroup, app, userEdited):
-    
-    global proc
-
-    
-    if thisParam == thisNode.play_song:
-        range_start = viwer_get().getFrameRange()[0]
-        range_end = viwer_get().getFrameRange()[1]
-        sound_file = thisNode.Sound_File.get()
-        fps = app.frameRate.get()
-        play = playAudio(sound_file, fps,range_start,range_end)
-        thisNode.start_frame.set(range_start)
-        thisNode.end_frame.set(range_end)
-        thisNode.FPS.set(fps)
-        viwer_get().seek(range_start)
-        viwer_get().startForward()
+def close_vlc():
+    if _proc.poll() is None:
+        print("Killing process pid %s " % (_proc.pid))
+        # os.kill(proc.pid, signal.SIGKILL)
 
         if platform == "win32":
-            proc = subprocess.Popen(play, stdin = subprocess.PIPE, stdout = subprocess.PIPE, shell=True)
+            subprocess.Popen("TASKKILL /F /PID {pid} /T".format(pid=_proc.pid))
         else:
-            proc = subprocess.Popen("exec " + play, stdin = subprocess.PIPE, stdout = subprocess.PIPE, shell=True)
-        
-        
-
-        print(play)
-        print ("Playing process pid %s " % (proc.pid))
+            _proc.kill()
 
 
-            
+def panic_vlc():
+    if platform == "win32":
+        subprocess.Popen("Taskkill /IM vlc.exe /f")
+    else:
+        subprocess.Popen(
+            "killall vlc", stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True
+        )
+
+
+def vlc_callback(thisParam, thisNode, thisGroup, app, userEdited):
+    viewer = get_viewer(app)
+    thisNode.start_frame.set(viewer.getFrameRange()[0])
+    thisNode.end_frame.set(viewer.getFrameRange()[1])
+    thisNode.FPS.set(app.frameRate.get())
+
+    if not viewer:
+        if userEdited and thisParam == thisNode.play_song:
+            natron.errorDialog(
+                "Error",
+                "Unable to find active viewer.  Try attaching something to a viewer and playing it without this plugin, then render the first few frames and seek back to the beginning.",
+            )
+        return
+
+    if thisParam == thisNode.play_song:
+        play_natron(
+            viewer,
+            thisNode.Sound_File.get(),
+            app.frameRate.get(),
+            viewer.getCurrentFrame(),
+            viewer.getFrameRange()[1],
+        )
+
+    if thisParam == thisNode.start_song:
+        play_natron(
+            viewer,
+            thisNode.Sound_File.get(),
+            app.frameRate.get(),
+            viewer.getFrameRange()[0],
+            viewer.getFrameRange()[1],
+        )
+
     if thisParam == thisNode.stop_song:
-        viwer_get().pause()
-        if proc.poll() is None:
-            print ("Killing process pid %s " % (proc.pid))
-            # os.kill(proc.pid, signal.SIGKILL)
-            
-            if platform == "win32":
-                subprocess.Popen("TASKKILL /F /PID {pid} /T".format(pid=proc.pid))
-            else:
-                proc.kill()
+        viewer.pause()
+        close_vlc()
 
     if thisParam == thisNode.panic:
-        viwer_get().pause()
-        if platform == "win32":
-            subprocess.Popen("Taskkill /IM vlc.exe /f")
-        else:
-            subprocess.Popen("killall vlc", stdin = subprocess.PIPE, stdout = subprocess.PIPE, shell=True)
-
-            
-
+        viewer.pause()
+        close_vlc()
