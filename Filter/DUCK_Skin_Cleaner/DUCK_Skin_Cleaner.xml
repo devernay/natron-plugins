@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package>
     <DisplayName>DUCK_Skin_Cleaner</DisplayName>
-    <Description>A tool developped to clean up models skin in common beauty/fashion shots.</Description>
+    <Description>A tool developed to clean up models skin in common beauty/fashion shots.</Description>
     <Version>1.0</Version>
     <ReleaseDate>@DATE@</ReleaseDate>
     <Name>natron.community.plugins.DUCK_Skin_Cleaner</Name>

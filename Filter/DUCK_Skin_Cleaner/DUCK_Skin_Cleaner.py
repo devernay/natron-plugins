@@ -31,7 +31,7 @@ def getGrouping():
     return "Community/Filter/Duck"
 
 def getPluginDescription():
-    return "A tool developped to clean up models skin in common beauty/fashion shots."
+    return "A tool developed to clean up models skin in common beauty/fashion shots."
 
 def createInstance(app,group):
     # Create all nodes in the group

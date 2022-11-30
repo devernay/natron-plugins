@@ -33,7 +33,7 @@ Note that the Zbuffer is not interpolated by the motion blur for obvious reasons
 
 ### .chan import
 .chan is the Nuke human readable format to import/export camera and objects animation between software.
-This Plugin as been tested and developped using Blender's .chan exporter, and not tested yet with other applications.
+This Plugin as been tested and developed using Blender's .chan exporter, and not tested yet with other applications.
 Blender .chan exporter is shipped with blender but not activated by default.
 
 At that time, only the XYZ rotation order is supported (this is blender .chan exporter default)

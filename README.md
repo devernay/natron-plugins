@@ -179,7 +179,7 @@ https://github.com/NatronGitHub/natron-plugins/wiki/Guidelines-for-plugins
 
 - <img src='/Filter/DUCK_Denoise/DUCK_Denoise.png' width='32'> **[DUCK_Denoise](/Filter/DUCK_Denoise)** : It helps to denoise a footage, since it is  not based on analisys: it just provides a denoise for black/white and coloured dots.
 
-- <img src='/Filter/DUCK_Skin_Cleaner/DUCK_Skin_Cleaner.png' width='32'> **[DUCK_Skin_Cleaner](/Filter/DUCK_Skin_Cleaner)** : A tool developped to clean up models skin in common beauty/fashion shots.
+- <img src='/Filter/DUCK_Skin_Cleaner/DUCK_Skin_Cleaner.png' width='32'> **[DUCK_Skin_Cleaner](/Filter/DUCK_Skin_Cleaner)** : A tool developed to clean up models skin in common beauty/fashion shots.
 
 - <img src='/Filter/DUCK_Smart_Blur/DUCK_Smart_Blur.png' width='32'> **[DUCK_Smart_Blur](/Filter/DUCK_Smart_Blur)** : Smart Blur isn't a common blur, it helps to blur images with heavy grain, surface imperfections, noises, render problems, etc. keeping the boundary and the edges, and restoring details in highlights and dark regions of the image.
 

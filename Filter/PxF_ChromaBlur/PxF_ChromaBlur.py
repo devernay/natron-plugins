@@ -375,7 +375,7 @@ def createInstance(app,group):
     lastNode.sep106 = param
     del param
 
-    param = lastNode.createSeparatorParam("FR", "Version NATRON des Gizmos Nuke développés par Xavier Bourque")
+    param = lastNode.createSeparatorParam("FR", "Version NATRON des Gizmos Nuke dÃ©veloppÃ©s par Xavier Bourque")
 
     # Add the param to the page
     lastNode.Credits.addParam(param)
